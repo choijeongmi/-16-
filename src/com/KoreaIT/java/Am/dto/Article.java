@@ -1,9 +1,8 @@
 package com.KoreaIT.java.Am.dto;
 
-public class Article {
+public class Article extends Dto {
 //	Data Transfor Object(DTO) or value Objectv(VO)
-	public int id;
-	public String regDate;
+	
 	public String title;
 	public String body;
 	public int viewCnt; // 조회수
