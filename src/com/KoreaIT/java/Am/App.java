@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import com.KoreaIT.java.Am.controller.ArticleController;
+import com.KoreaIT.java.Am.controller.Controller;
+import com.KoreaIT.java.Am.controller.MemberController;
 import com.KoreaIT.java.Am.dto.Article;
 import com.KoreaIT.java.Am.dto.Member;
 import com.KoreaIT.java.Am.util.Util;
@@ -13,7 +16,7 @@ public class App {
 	private List<Member> members;
 	// 가능)
 
-	public App() {
+	public App() { // router or 라우터 라고 함. 길안내.
 		articles = new ArrayList<>();
 		members = new ArrayList<>();
 
@@ -25,6 +28,9 @@ public class App {
 		makeTestData();
 
 		Scanner sc = new Scanner(System.in);
+
+		MemberController memberController = new MemberController(members, sc);
+		ArticleController articleController = new ArticleController(articles, sc);
 
 		// 무한루프
 		while (true) {
@@ -39,212 +45,57 @@ public class App {
 			if (cmd.equals("끝")) {
 				break;// 브레이크=멈추다.
 			}
+			String[] cmdBits = cmd.split(" ");// 공백을 기준으로 나눈다 ex) article detail
 
-//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE JOIN (회원가입) ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-
-			if (cmd.equals("member join")) {
-				int id = members.size() + 1;
-
-				String regDate = Util.getNowDateStr();
-				System.out.printf("ID : ");
-				String loginId = sc.nextLine();
-				
-				String loginPw = null;
-				String loginPwCheck = null;
-
-				while (true) {
-					System.out.printf("PW : ");
-					loginPw = sc.nextLine();
-					System.out.printf("PWCheck : ");
-					loginPwCheck = sc.nextLine();
-
-					if (loginPw.equals(loginPwCheck) == false) {
-						System.out.println("비밀번호가 일치하지 않습니다.");
-						continue;
-					}
-					break;
-				}
-
-				System.out.printf("이름 : ");
-				String name = sc.nextLine();
-
-				Member member = new Member(id, regDate, loginId, loginPw, name);
-				members.add(member);
-
-				System.out.printf("%d번 회원이 가입했습니다.\n", id);
-
+			if (cmdBits.length == 1) {
+				System.out.println("존재하지 않는 명령어입니다.");
+				continue;
 			}
 
-//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE WRITE (작성) ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-			else if (cmd.equals("article write")) {
-				int id = articles.size() + 1;
+			String controllerName = cmdBits[0]; // article
+		    String actionMethodName = cmdBits[1];//  detail
+		
 
-				String regDate = Util.getNowDateStr();
-				System.out.printf("제목 : ");
-				String title = sc.nextLine();
-				System.out.printf("내용 : ");
-				String body = sc.nextLine();
+			Controller controller = null;
 
-				Article article = new Article(id, regDate, title, body);
-				articles.add(article);
-
-				System.out.printf("%d번글이 생성되었습니다.\n", id);
-
+			if (controllerName.equals("article")) {
+				controller = articleController;
+			} else if (controllerName.equals("member")) {
+				controller = memberController;
+			} else {
+				System.out.println("존재하지 않는 명령어입니다.");
+				continue;
 			}
 
-//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE LIST (목록) ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+			controller.doAction(cmd, actionMethodName);
 
-			else if (cmd.startsWith("article list")) {
-				if (articles.size() == 0) { // arraylist가 비어있는 경우
-					System.out.println("게시글이 없습니다.");
-					continue;// 컨티뉴를 만나면 위로 다시 올라가서 반복하는 경우를 없앤다. 바로 for문으로 이동.
-
-				}
-				String searchKeyword = cmd.substring("article list".length()).trim();
-				List<Article> forPrintArticles = articles;
-
-				if (searchKeyword.length() > 0) {
-					forPrintArticles = new ArrayList<>();
-					for (Article article : articles) {
-						if (article.title.contains(searchKeyword)) {
-							forPrintArticles.add(article);
-						}
-						if (articles.size() == 0) {
-							System.out.println("검색결과가 없습니다.");
-							continue;
-						}
-					}
-
-					System.out.printf("검색어 : %s\n", searchKeyword);
-					System.out.println("번호  |  제목  |  조회");
-					for (int i = forPrintArticles.size() - 1; i >= 0; i--) {
-						Article article = forPrintArticles.get(i);
-						System.out.printf("%2d  |  %2s  |  %2d\n", article.id, article.title, article.viewCnt);
-					}
-
-				}
-
-//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE DETAIL (상세) ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-
-//			      startsWith > ~ 로 시작한다면.  / split (쪼갠다, 분할)
-				else if (cmd.startsWith("article detail ")) {
-					String[] cmdBits = cmd.split(" "); // 공백을 기준으로 분할할래 라는 뜻 "공백"
-//			    	  =>명령문이 3개의 분할이기 때문에 [] 배열로 묶어준다.
-					int id = Integer.parseInt(cmdBits[2]);
-
-					Article foundArticle = getArticleById(id);
-
-					/*
-					 * for (int i = 0; i < articles.size(); i++) { Article article =
-					 * articles.get(i); // => 0부터 size 전까지 탐색하겠다 라는 뜻. i = 0 if (article.id == id) {
-					 * // found = true; > found 가 참일 경우 브레이크. 로 넣어줄수도 있음 foundArticle = article;
-					 * break; // 가장 가까운 반복문을 탈출하는 거. 탐색 중 정답을 찾았을때 탐색을 중지시키기위해 } } // 위의 for문에서 탐색을
-					 * 마친 후 정답을 찾으면 break를 통해 for문을 빠져나와 아래의 if문으로 이동.
-					 */
-					if (foundArticle == null) { // 찾은 게시물(foundArticle)이 없을때
-						System.out.printf("%d번 게시물은 존재하지 않습니다.\n", id);
-						continue;
-					} // 그 외의 값이면 아래가 출력 >> 외의값은 found 값이 트루일 경우 if가 아닌 else로 이동.
-
-					foundArticle.increaseViewCnt();
-
-					System.out.printf("번호 : %d\n", foundArticle.id);
-					System.out.printf("날짜 :%s\n", foundArticle.regDate);
-					System.out.printf("제목 : %s\n", foundArticle.title);
-					System.out.printf("내용 : %s\n", foundArticle.body);
-					System.out.printf("조회 : %d\n", foundArticle.viewCnt);
-				}
-
-//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE DELETE (삭제) ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ		        
-
-//			      delete의 핵심은 index
-				else if (cmd.startsWith("article delete ")) {
-					String[] cmdBits = cmd.split(" ");
-
-					int id = Integer.parseInt(cmdBits[2]);
-
-					int foundIndex = getArticleIndexById(id);
-
-					/*
-					 * for (int i = 0; i < articles.size(); i++) { Article article =
-					 * articles.get(i);
-					 * 
-					 * if (article.id == id) {
-					 * 
-					 * foundIndex = i; break; } }
-					 */
-					if (foundIndex == -1) {
-						System.out.printf("%d번 게시물은 존재하지 않습니다.\n", id);
-						continue;
-					}
-					articles.remove(foundIndex); // 또는 (id -1) 리무브id값은 3 어레이리스트 값은 2이기 때문에 -1을 해준다 방번호는 0부터 시작이기 때문에~~
-
-					System.out.printf("%d번 게시물이 삭제 되었습니다.\n", id);
-
-				}
-
-//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE MODIFY (수정) ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ		
-
-				else if (cmd.startsWith("article modify ")) {
-					String[] cmdBits = cmd.split(" ");
-
-					int id = Integer.parseInt(cmdBits[2]);
-
-					Article foundArticle = getArticleById(id);
-
-					if (foundArticle == null) {
-						System.out.printf("%d번 게시물은 존재하지 않습니다.\n", id);
-						continue;
-					}
-					System.out.printf("제목 : ");
-					String title = sc.nextLine(); // 내용을 받겠다. 입력할 수 있게 도와주는 코드.
-					System.out.printf("내용 : ");
-					String body = sc.nextLine();
-
-					foundArticle.title = title;
-					foundArticle.body = body;
-
-					System.out.printf("%d번 게시물이 수정 되었습니다.\n", id);
-
-				}
-
-			}
+			/*
+			 * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE JOIN (회원가입)
+			 * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+			 * 
+			 * // if (cmd.equals("member join")) { // memberController.doJoin(); // } //
+			 * ////ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE WRITE (작성)
+			 * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ // else if
+			 * (cmd.equals("article write")) { // articleController.doWrite(); // // } //
+			 * ////ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE LIST (목록)
+			 * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ // // else if
+			 * (cmd.startsWith("article list")) { // articleController.showList(cmd); // }
+			 * // ////ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE DETAIL (상세)
+			 * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ // //// startsWith > ~ 로
+			 * 시작한다면. / split (쪼갠다, 분할) // else if (cmd.startsWith("article detail ")) { //
+			 * articleController.showDetail(cmd); // // } //
+			 * ////ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE DELETE (삭제)
+			 * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ // //// delete의 핵심은 index // else if
+			 * (cmd.startsWith("article delete ")) { // articleController.showDelete(cmd);
+			 * // // // } // ////ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ARTICLE MODIFY (수정)
+			 * ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ // // else if
+			 * (cmd.startsWith("article modify ")) { // articleController.showModify(cmd);
+			 * // // // }
+			 */
+//
 		}
-	}
-
-	private int getArticleIndexById(int id) {
-		int i = 0;
-		for (Article article : articles) {
-			if (article.id == id) {
-				return i;
-			}
-			i++;
-		}
-
-		return -1;
-	}
-
-	private Article getArticleById(int id) {
-		/*
-		 * 과정1 for (int i = 0; i < articles.size(); i++) { Article article =
-		 * articles.get(i);
-		 * 
-		 * if (article.id == id) { Article foundArticle = article;
-		 * 
-		 * break; } }
-		 */
-
-		/*
-		 * 과정2 for(Article article : articles) { if(article.id == id) { return article;
-		 * } }
-		 */
-
-		int index = getArticleIndexById(id);
-		if (index != -1) {
-			return articles.get(index);
-		}
-
-		return null;
+		sc.close();
+		System.out.println("===프로그램 종료===");
 	}
 
 	private void makeTestData() {
