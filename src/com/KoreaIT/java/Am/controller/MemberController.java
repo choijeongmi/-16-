@@ -3,58 +3,105 @@ package com.KoreaIT.java.Am.controller;
 import java.util.List;
 import java.util.Scanner;
 
+import com.KoreaIT.java.Am.container.container;
 import com.KoreaIT.java.Am.dto.Member;
 import com.KoreaIT.java.Am.util.Util;
 
 public class MemberController extends Controller {
 	private List<Member> members;
-	private Scanner sc;
 	private String cmd;
+	private Scanner sc;
 	private String actionMethodName;
-	
-	public MemberController(List<Member> members, Scanner sc){
-		this.members = members;
-		this.sc =sc;
+
+	public MemberController(Scanner sc) {
+		this.sc = sc;
+		members = container.memberDao.members;
 	}
-	
+
 	public void doAction(String cmd, String actionMethodName) {
 		this.cmd = cmd;
 		this.actionMethodName = actionMethodName;
-		
-		switch(actionMethodName) {
+
+		switch (actionMethodName) {
 		case "join":
 			doJoin();
+			break;
+		case "login":
+			doLogin();
+			break;
+		case "logout":
+			doLogout();
+			break;
+		default:
+			System.out.println("존재하지 않는 명령어입니다");
 			break;
 		}
 	}
 
-	public void doJoin() {
-		int id = members.size() + 1;
+	private void doLogout() {
+		if (isLogined() == false) {
+			System.out.println("로그인 상태가 아닙니다");
+			return;
+		}
 
+		loginedMember = null;
+		System.out.println("로그아웃 되었습니다");
+	}
+
+	private void doLogin() {
+		if (isLogined()) {
+			System.out.println("로그아웃 후 이용하세요");
+			return;
+		}
+
+		System.out.printf("로그인 아이디 : ");
+		String loginId = sc.nextLine();
+		System.out.printf("로그인 비밀번호 : ");
+		String loginPw = sc.nextLine();
+
+		Member member = getMemberByLoginId(loginId);
+
+		if (member == null) {
+			System.out.println("존재하지 않는 회원입니다");
+			return;
+		}
+
+		if (member.loginPw.equals(loginPw) == false) {
+			System.out.println("비밀번호를 확인하세요");
+			return;
+		}
+
+		loginedMember = member;
+		System.out.printf("%s님이 로그인 했습니다\n", loginedMember.name);
+
+	}
+
+	public void doJoin() {
+		int id = container.memberDao.getNewId();
 		String regDate = Util.getNowDateStr();
 
 		String loginId = null;
 		while (true) {
-			System.out.printf("ID : ");
+			System.out.printf("로그인 아이디 : ");
 			loginId = sc.nextLine();
+
 			if (isJoinableLoginId(loginId) == false) {
-				System.out.printf("%s(은)는 사용중인 아이디입니다.\n", loginId);
+				System.out.printf("%s(은)는 사용중인 아이디입니다\n", loginId);
 				continue;
 			}
 			break;
-		} // 입력한 id가 가입이 가능한지
+		}
 
 		String loginPw = null;
 		String loginPwCheck = null;
-
 		while (true) {
-			System.out.printf("PW : ");
+			System.out.printf("로그인 비밀번호 : ");
 			loginPw = sc.nextLine();
-			System.out.printf("PWCheck : ");
+			System.out.printf("로그인 비밀번호 확인 : ");
 			loginPwCheck = sc.nextLine();
 
 			if (loginPw.equals(loginPwCheck) == false) {
-				System.out.println("비밀번호가 일치하지 않습니다.");
+				System.out.println("비밀번호를 다시 입력하세요");
 				continue;
 			}
 			break;
@@ -64,32 +111,45 @@ public class MemberController extends Controller {
 		String name = sc.nextLine();
 
 		Member member = new Member(id, regDate, loginId, loginPw, name);
-		members.add(member);
+		container.memberDao.add(member);
 
-		System.out.printf("%d번 회원이 가입했습니다.\n", id);
-
+		System.out.printf("%d번 회원이 가입했습니다\n", id);
 	}
-	
+
 	private boolean isJoinableLoginId(String loginId) {
-		int index= getMemberIndexByLoginId(loginId);
-		
-		if(index == -1) {
+		int index = getMemberIndexByLoginId(loginId);
+
+		if (index == -1) {
 			return true;
 		}
+
 		return false;
+	}
+
+	private Member getMemberByLoginId(String loginId) {
+		int idx = getMemberIndexByLoginId(loginId);
+
+		if (idx == -1) {
+			return null;
+		}
+		return members.get(idx);
 	}
 
 	private int getMemberIndexByLoginId(String loginId) {
 		int i = 0;
-		for(Member member : members) {
-			if(member.loginId.equals(loginId)) {
+
+		for (Member member : members) {
+			if (member.loginId.equals(loginId)) {
 				return i;
 			}
 			i++;
 		}
 		return -1;
 	}
-		
-	}
 
-
+	public void makeTestData() {
+		System.out.println("테스트를 위한 회원 데이터를 생성합니다");
+		container.memberDao.add(new Member(container.memberDao.getNewId(), Util.getNowDateStr(), "admin", "admin", "관리자"));
+		container.memberDao.add(new Member(container.memberDao.getNewId(), Util.getNowDateStr(), "test1", "test1", "회원1"));
+		container.memberDao.add(new Member(container.memberDao.getNewId(), Util.getNowDateStr(), "test2", "test2", "회원2"));}
+}
